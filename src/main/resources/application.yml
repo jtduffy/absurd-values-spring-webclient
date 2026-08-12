@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: absurd-values-spring-webclient
+
+server:
+  port: 8080
+  tomcat:
+    threads:
+      max: 400
+
+repro:
+  downstream:
+    min-delay-ms: 8000
+    max-delay-ms: 10000
+    error-rate: 0.0
+  webclient:
+    max-connections: 20
+    pending-acquire-max-count: 1000
+    pending-acquire-timeout-seconds: 90

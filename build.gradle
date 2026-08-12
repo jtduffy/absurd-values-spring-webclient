@@ -1,0 +1,40 @@
+plugins {
+    id 'org.springframework.boot' version '4.0.1'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'java'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+java.sourceCompatibility = JavaVersion.VERSION_21
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Plain Spring MVC (Tomcat, thread-per-request) app, matching the ticket's own
+    // description of the call site as "a ForkJoinPool thread" rather than a
+    // reactor-netty event loop. Reactor's non-blocking-thread guard only rejects
+    // block() on threads it manages itself (its own schedulers, reactor-netty event
+    // loops); it does not know about Tomcat or ForkJoinPool.commonPool() threads, so
+    // this combination reproduces the ticket's blocking pattern without Reactor
+    // simply refusing the call outright.
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // WebClient itself (and its reactor-netty backing) — pulled in explicitly since
+    // spring-boot-starter-web alone does not bring in the reactive web client stack.
+    // Versions are still resolved from the Spring Boot 4.0.1 BOM, matching the
+    // ticket's spring-webflux 7.0.2 / reactor-netty-http 1.3.1.
+    implementation 'org.springframework:spring-webflux'
+    implementation 'io.projectreactor.netty:reactor-netty-http'
+
+    // Non-reactive client used only as a "control" call against the same downstream
+    // host, mirroring the ticket's observation that the Jersey-Client metric on the
+    // same host/window stays correct while the WebClient one overflows. Versions left
+    // unpinned so they resolve from the Spring Boot BOM's jersey-bom import — pinning
+    // just jersey-client/jersey-hk2 here left jersey's other transitive modules
+    // (e.g. jersey-common) on the BOM's newer version, which is binary-incompatible.
+    implementation 'org.glassfish.jersey.core:jersey-client'
+    implementation 'org.glassfish.jersey.inject:jersey-hk2'
+}
